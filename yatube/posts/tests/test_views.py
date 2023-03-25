@@ -26,10 +26,14 @@ class PostPagesTests(TestCase):
         """Задание 1: проверка namespace:name"""
         templates_pages_names = {
             reverse('posts:index'): 'posts/index.html',
-            reverse('posts:group_list', kwargs={'slug': 'group_test'}): 'posts/group_list.html',
-            reverse('posts:profile', kwargs={'username': 'author'}): 'posts/profile.html',
-            reverse('posts:post_detail', kwargs={'post_id': '1'}): 'posts/post_detail.html',
-            reverse('posts:post_edit', kwargs={'post_id': '1'}): 'posts/create_post.html',
+            reverse('posts:group_list',
+                    kwargs={'slug': 'group_test'}): 'posts/group_list.html',
+            reverse('posts:profile',
+                    kwargs={'username': 'author'}): 'posts/profile.html',
+            reverse('posts:post_detail',
+                    kwargs={'post_id': '1'}): 'posts/post_detail.html',
+            reverse('posts:post_edit',
+                    kwargs={'post_id': '1'}): 'posts/create_post.html',
             reverse('posts:post_create'): 'posts/create_post.html',
         }
 
@@ -44,22 +48,26 @@ class PostPagesTests(TestCase):
         self.assertIn('page_obj', response.context)
 
     def test_group_list_show_correct_context(self):
-        response = self.author_client.get(reverse('posts:group_list', kwargs={'slug': 'group_test'}))
+        response = self.author_client.get(
+            reverse('posts:group_list', kwargs={'slug': 'group_test'}))
         self.assertIn('page_obj', response.context)
         self.assertEqual(self.group, response.context['group'])
 
     def test_profile_show_correct_context(self):
-        response = self.author_client.get(reverse('posts:profile', kwargs={'username': 'author'}))
+        response = self.author_client.get(
+            reverse('posts:profile', kwargs={'username': 'author'}))
         self.assertIn('page_obj', response.context)
         self.assertEqual(self.author_user, response.context['author'])
 
     def test_post_detail_show_correct_context(self):
-        response = self.author_client.get(reverse('posts:post_detail', kwargs={'post_id': '1'}))
+        response = self.author_client.get(
+            reverse('posts:post_detail', kwargs={'post_id': '1'}))
         self.assertIn('post', response.context)
         self.assertEqual(self.post, response.context['post'])
 
     def test_post_edit_show_correct_context(self):
-        response = self.author_client.get(reverse('posts:post_edit', kwargs={'post_id': '1'}))
+        response = self.author_client.get(
+            reverse('posts:post_edit', kwargs={'post_id': '1'}))
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField
@@ -95,13 +103,16 @@ class PostPagesTests(TestCase):
         response = self.author_client.get(reverse('posts:index'))
         self.assertIn(self.post, response.context['page_obj'])
 
-        response = self.author_client.get(reverse('posts:group_list', kwargs={'slug': 'group_test'}))
+        response = self.author_client.get(
+            reverse('posts:group_list', kwargs={'slug': 'group_test'}))
         self.assertIn(self.post, response.context['page_obj'])
 
-        response = self.author_client.get(reverse('posts:profile', kwargs={'username': 'author'}))
+        response = self.author_client.get(
+            reverse('posts:profile', kwargs={'username': 'author'}))
         self.assertIn(self.post, response.context['page_obj'])
 
-        response = self.author_client.get(reverse('posts:group_list', kwargs={'slug': 'group_test2'}))
+        response = self.author_client.get(
+            reverse('posts:group_list', kwargs={'slug': 'group_test2'}))
         self.assertNotIn(self.post, response.context['page_obj'])
 
 

@@ -28,6 +28,7 @@ class PostFormTests(TestCase):
         response = self.author_client.post(
             reverse('posts:post_create'),
             data=form_data)
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(Post.objects.count(), posts_count + 1)
 
         post = Post.objects.latest('id')
@@ -51,6 +52,7 @@ class PostFormTests(TestCase):
             reverse('posts:post_edit', kwargs={'post_id': post_id}),
             data=new_form_data)
         post = Post.objects.get(pk=post_id)
+        self.assertEqual(response.status_code, 302)
 
         self.assertEqual(post.text, new_form_data['text'])
         self.assertEqual(post.group.id, new_form_data['group'])
