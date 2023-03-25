@@ -19,7 +19,8 @@ class PostFormTests(TestCase):
         self.author_client.force_login(PostFormTests.author_user)
 
     def test_create_post(self):
-        """при отправке валидной формы со страницы создания поста reverse('posts:create_post') создаётся новая запись в базе данных"""
+        """при отправке валидной формы со страницы создания поста
+        reverse('posts:create_post') создаётся новая запись в базе данных"""
         posts_count = Post.objects.count()
         form_data = {
             'text': 'Текст поста',
@@ -37,7 +38,9 @@ class PostFormTests(TestCase):
         self.assertEqual(post.author, self.author_user)
 
     def test_post_edit(self):
-        """при отправке валидной формы со страницы редактирования поста reverse('posts:post_edit', args=('post_id',)) происходит изменение поста с post_id в базе данных."""
+        """при отправке валидной формы со страницы редактирования поста
+        reverse('posts:post_edit', args=('post_id',)) происходит изменение
+        поста с post_id в базе данных."""
 
         self.test_create_post()
 

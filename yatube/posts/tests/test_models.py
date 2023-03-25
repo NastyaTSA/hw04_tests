@@ -17,7 +17,7 @@ class PostModelTest(TestCase):
         )
         cls.post = Post.objects.create(
             author=cls.user,
-            text='Тестовый пост11111111111111111111111111111111111111111111111111111',
+            text='Тестовый пост111111111111111111111111111111111111111111',
         )
 
     def test_models_have_correct_object_names(self):
@@ -30,5 +30,6 @@ class PostModelTest(TestCase):
         self.assertEqual(PostModelTest.group.title, str(PostModelTest.group))
 
     def test_verbose_name(self):
-        """ тесты для verbose_name и help_text пишут только в приступе сильной coverage-зависимости"""
+        """ тесты для verbose_name и help_text пишут только в приступе сильной
+        coverage-зависимости"""
         pass

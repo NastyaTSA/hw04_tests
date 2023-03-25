@@ -37,7 +37,8 @@ class PostPagesTests(TestCase):
             reverse('posts:post_create'): 'posts/create_post.html',
         }
 
-        # Проверяем, что при обращении к name вызывается соответствующий HTML-шаблон
+        # Проверяем, что при обращении к name вызывается соответствующий
+        # HTML-шаблон
         for reverse_name, template in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
                 response = self.author_client.get(reverse_name)
@@ -73,7 +74,8 @@ class PostPagesTests(TestCase):
             'group': forms.fields.ChoiceField
         }
 
-        # Проверяем, что типы полей формы в словаре context соответствуют ожиданиям
+        # Проверяем, что типы полей формы в словаре context соответствуют
+        # ожиданиям
         for value, expected in form_fields.items():
             with self.subTest(value=value):
                 form_field = response.context.get('form').fields.get(value)
@@ -90,7 +92,8 @@ class PostPagesTests(TestCase):
             'group': forms.fields.ChoiceField
         }
 
-        # Проверяем, что типы полей формы в словаре context соответствуют ожиданиям
+        # Проверяем, что типы полей формы в словаре context соответствуют
+        # ожиданиям
         for value, expected in form_fields.items():
             with self.subTest(value=value):
                 form_field = response.context.get('form').fields.get(value)
