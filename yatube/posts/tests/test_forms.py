@@ -15,10 +15,11 @@ class PostFormTests(TestCase):
             title="группа2", slug="group_test2", description="группа тестов2")
 
     def setUp(self):
+        self.guest_client = Client()
         self.author_client = Client()
         self.author_client.force_login(PostFormTests.author_user)
 
-    def test_create_post(self):
+    def test_create_post_for_authorized_user(self):
         """при отправке валидной формы со страницы создания поста
         reverse('posts:create_post') создаётся новая запись в базе данных"""
         posts_count = Post.objects.count()
@@ -37,12 +38,25 @@ class PostFormTests(TestCase):
         self.assertEqual(post.group.id, form_data['group'])
         self.assertEqual(post.author, self.author_user)
 
-    def test_post_edit(self):
+    def test_create_post_for_nonauthorized_user(self):
+        posts_count = Post.objects.count()
+        form_data = {
+            'text': 'Текст поста без авторизации',
+            'group': self.group.id
+        }
+        response = self.guest_client.post(
+            reverse('posts:post_create'),
+            data=form_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Post.objects.count(), posts_count)
+        self.assertFalse(Post.objects.filter(text=form_data['text']).exists())
+
+    def test_post_edit_for_authorized_user(self):
         """при отправке валидной формы со страницы редактирования поста
         reverse('posts:post_edit', args=('post_id',)) происходит изменение
         поста с post_id в базе данных."""
 
-        self.test_create_post()
+        self.test_create_post_for_authorized_user()
 
         post = Post.objects.latest('id')
 
@@ -59,3 +73,34 @@ class PostFormTests(TestCase):
 
         self.assertEqual(post.text, new_form_data['text'])
         self.assertEqual(post.group.id, new_form_data['group'])
+
+    def test_post_edit_for_nonauthorized_user(self):
+        """при отправке валидной формы со страницы редактирования поста
+        reverse('posts:post_edit', args=('post_id',)) происходит изменение
+        поста с post_id в базе данных."""
+
+        self.test_create_post_for_authorized_user()
+        posts_count = Post.objects.count()
+
+        post = Post.objects.latest('id')
+
+        old_form_data = {
+            'text': post.text,
+            'group': post.group.id
+        }
+
+        post_id = post.pk
+        new_form_data = {
+            'text': post.text + ' edited',
+            'group': self.group2.id
+        }
+        response = self.guest_client.post(
+            reverse('posts:post_edit', kwargs={'post_id': post_id}),
+            data=new_form_data)
+        post = Post.objects.get(pk=post_id)
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(Post.objects.count(), posts_count)
+
+        self.assertEqual(post.text, old_form_data['text'])
+        self.assertEqual(post.group.id, old_form_data['group'])

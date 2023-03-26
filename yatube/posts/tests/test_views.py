@@ -18,11 +18,10 @@ class PostPagesTests(TestCase):
             text="Тестовый текст", author=cls.author_user, group=cls.group)
 
     def setUp(self):
-        # Cоздаем клиент автора
         self.author_client = Client()
         self.author_client.force_login(PostPagesTests.author_user)
 
-    def test_pages_uses_correct_template(self):
+    def test_pages_uses_correct_template_for_authorized_user(self):
         """Задание 1: проверка namespace:name"""
         templates_pages_names = {
             reverse('posts:index'): 'posts/index.html',
@@ -37,11 +36,27 @@ class PostPagesTests(TestCase):
             reverse('posts:post_create'): 'posts/create_post.html',
         }
 
-        # Проверяем, что при обращении к name вызывается соответствующий
-        # HTML-шаблон
         for reverse_name, template in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
                 response = self.author_client.get(reverse_name)
+                self.assertTemplateUsed(response, template)
+
+    def test_pages_uses_correct_template_for_nonauthorized_user(self):
+        guest_client = Client()
+
+        templates_pages_names = {
+            reverse('posts:index'): 'posts/index.html',
+            reverse('posts:group_list',
+                    kwargs={'slug': 'group_test'}): 'posts/group_list.html',
+            reverse('posts:profile',
+                    kwargs={'username': 'author'}): 'posts/profile.html',
+            reverse('posts:post_detail',
+                    kwargs={'post_id': '1'}): 'posts/post_detail.html',
+        }
+
+        for reverse_name, template in templates_pages_names.items():
+            with self.subTest(reverse_name=reverse_name):
+                response = guest_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
 
     def test_index_show_correct_context(self):
@@ -74,13 +89,9 @@ class PostPagesTests(TestCase):
             'group': forms.fields.ChoiceField
         }
 
-        # Проверяем, что типы полей формы в словаре context соответствуют
-        # ожиданиям
         for value, expected in form_fields.items():
             with self.subTest(value=value):
                 form_field = response.context.get('form').fields.get(value)
-                # Проверяет, что поле формы является экземпляром
-                # указанного класса
                 self.assertIsInstance(form_field, expected)
 
         self.assertIn('is_edit', response.context)
@@ -92,13 +103,9 @@ class PostPagesTests(TestCase):
             'group': forms.fields.ChoiceField
         }
 
-        # Проверяем, что типы полей формы в словаре context соответствуют
-        # ожиданиям
         for value, expected in form_fields.items():
             with self.subTest(value=value):
                 form_field = response.context.get('form').fields.get(value)
-                # Проверяет, что поле формы является экземпляром
-                # указанного класса
                 self.assertIsInstance(form_field, expected)
 
     def test_post_creation(self):
@@ -134,7 +141,6 @@ class PaginatorViewsTest(TestCase):
             )
 
     def setUp(self):
-        # Cоздаем клиент автора
         self.author_client = Client()
         self.author_client.force_login(PaginatorViewsTest.author_user)
 

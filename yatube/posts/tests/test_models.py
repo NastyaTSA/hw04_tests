@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from ..models import Group, Post, User
 
-TEXT_LEN = 15
+TEXT_LEN: int = 15
 
 
 class PostModelTest(TestCase):
@@ -28,8 +28,3 @@ class PostModelTest(TestCase):
     def test_group_have_correct_title(self):
         """Проверяем, что у моделей корректно работает __str__."""
         self.assertEqual(PostModelTest.group.title, str(PostModelTest.group))
-
-    def test_verbose_name(self):
-        """ тесты для verbose_name и help_text пишут только в приступе сильной
-        coverage-зависимости"""
-        pass

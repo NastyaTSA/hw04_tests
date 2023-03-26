@@ -15,14 +15,10 @@ class PostURLTests(TestCase):
             text="Тестовый текст", author=cls.author_user, group=cls.group)
 
     def setUp(self):
-        # Создаем неавторизованный клиент
         self.guest_client = Client()
-        # Создаем пользователя
         self.user = User.objects.create_user(username='HasNoName')
-        # Создаем второй клиент
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
-        # Cоздаем клиент автора
         self.author_client = Client()
         self.author_client.force_login(PostURLTests.author_user)
 
@@ -71,7 +67,7 @@ class PostURLTests(TestCase):
                 response = self.author_client.get(address)
                 self.assertEqual(response.status_code, status)
 
-    def test_used_templates(self):
+    def test_used_templates_for_authorized_user(self):
         urls_templates = {
             "/": "posts/index.html",
             "/group/group_test/": "posts/group_list.html",
@@ -83,4 +79,17 @@ class PostURLTests(TestCase):
         for address, template in urls_templates.items():
             with self.subTest(address=address):
                 response = self.author_client.get(address)
+                self.assertTemplateUsed(response, template)
+
+    def test_used_templates_for_nonauthorized_user(self):
+        urls_templates = {
+            "/": "posts/index.html",
+            "/group/group_test/": "posts/group_list.html",
+            "/profile/author/": "posts/profile.html",
+            "/posts/1/": "posts/post_detail.html",
+        }
+
+        for address, template in urls_templates.items():
+            with self.subTest(address=address):
+                response = self.guest_client.get(address)
                 self.assertTemplateUsed(response, template)
