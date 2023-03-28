@@ -1,4 +1,3 @@
-# posts/tests/test_urls.py
 from django.test import TestCase, Client
 
 from ..models import Group, Post, User
