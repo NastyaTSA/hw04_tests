@@ -14,7 +14,7 @@ def validate_not_empty(value):
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ('text', 'group')
+        fields = ('text', 'group', 'image')
 
     text = forms.CharField(widget=forms.Textarea,
                            validators=[validate_not_empty],

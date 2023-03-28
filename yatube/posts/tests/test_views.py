@@ -1,10 +1,18 @@
+import shutil
+import tempfile
+
 from django import forms
-from django.test import Client, TestCase
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from ..models import User, Group, Post
 
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostPagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -14,8 +22,31 @@ class PostPagesTests(TestCase):
             title="группа", slug="group_test", description="группа тестов")
         cls.second_group = Group.objects.create(
             title="группа2", slug="group_test2", description="группа тестов2")
+        cls.small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        cls.uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=cls.small_gif,
+            content_type='image/gif'
+        )
+
         cls.post = Post.objects.create(
-            text="Тестовый текст", author=cls.author_user, group=cls.group)
+            text="Тестовый текст",
+            author=cls.author_user,
+            group=cls.group,
+            image=cls.uploaded,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
         self.author_client = Client()
@@ -62,24 +93,32 @@ class PostPagesTests(TestCase):
     def test_index_show_correct_context(self):
         response = self.author_client.get(reverse('posts:index'))
         self.assertIn('page_obj', response.context)
+        self.assertEqual(response.context['page_obj'][0].image.name,
+                         f'posts/{self.uploaded}')
 
     def test_group_list_show_correct_context(self):
         response = self.author_client.get(
             reverse('posts:group_list', kwargs={'slug': 'group_test'}))
         self.assertIn('page_obj', response.context)
         self.assertEqual(self.group, response.context['group'])
+        self.assertEqual(response.context['page_obj'][0].image.name,
+                         f'posts/{self.uploaded}')
 
     def test_profile_show_correct_context(self):
         response = self.author_client.get(
             reverse('posts:profile', kwargs={'username': 'author'}))
         self.assertIn('page_obj', response.context)
         self.assertEqual(self.author_user, response.context['author'])
+        self.assertEqual(response.context['page_obj'][0].image.name,
+                         f'posts/{self.uploaded}')
 
     def test_post_detail_show_correct_context(self):
         response = self.author_client.get(
             reverse('posts:post_detail', kwargs={'post_id': '1'}))
         self.assertIn('post', response.context)
         self.assertEqual(self.post, response.context['post'])
+        self.assertEqual(response.context['post'].image.name,
+                         f'posts/{self.uploaded}')
 
     def test_post_edit_show_correct_context(self):
         response = self.author_client.get(

@@ -4,24 +4,12 @@
 {% endblock title %}
 {% block content %}
   <div class="container py-5">
-    <h1>{{ group.title }}</h1>
-    <p>{{ group.description }}</p>
-    <article>
-      {% for post in page_obj %}
-        <ul>
-          <li>
-            Автор: <a href={% url 'posts:profile' post.author %}>{{ post.author.get_full_name }}</a>
-          </li>
-          <li>
-            Дата публикации: {{ post.pub_date|date:"d E Y" }}
-          </li>
-        </ul>
-        <p>{{ post.text }}</p>
-        {% if not forloop.last %}
-          <hr>
-        {% endif %}
-      {% endfor %}
-      {% include 'posts/includes/paginator.html' %}
-    </article>
+    <h1>Группа: {{ group.title }}</h1>
+    <h3>{{ group.description }}</h3>
+    <br>
+    {% for post in page_obj %}
+      {% include 'includes/post_text.html' %}
+    {% endfor %}
+    {% include 'posts/includes/paginator.html' %}
   </div>
 {% endblock content %}
