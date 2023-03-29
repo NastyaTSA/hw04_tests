@@ -3,11 +3,12 @@ import tempfile
 
 from django import forms
 from django.conf import settings
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from ..models import User, Group, Post
+from ..models import User, Group, Post, Follow
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -164,6 +165,21 @@ class PostPagesTests(TestCase):
             reverse('posts:group_list', kwargs={'slug': 'group_test2'}))
         self.assertNotIn(self.post, response.context['page_obj'])
 
+    def test_cache(self):
+        post = Post.objects.create(text=self.post.text,
+                                   author=self.author_user, group=self.group)
+
+        response = self.author_client.get(reverse('posts:index'))
+        self.assertEqual(post, response.context['page_obj'][0])
+
+        post.delete()
+        response_after_del = self.author_client.get(reverse('posts:index'))
+        self.assertEqual(response.content, response_after_del.content)
+
+        cache.clear()
+        response_after_clear = self.author_client.get(reverse('posts:index'))
+        self.assertNotEqual(response.content, response_after_clear.content)
+
 
 class PaginatorViewsTest(TestCase):
     """Задание 2: проверка контекста. Тестируем паджинатор"""
@@ -196,3 +212,55 @@ class PaginatorViewsTest(TestCase):
                 self.assertEqual(len(response.context['page_obj']), 10)
                 response = self.author_client.get(urls + '?page=2')
                 self.assertEqual(len(response.context['page_obj']), 3)
+
+
+class FollowTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='user')
+        cls.author_user = User.objects.create_user(username='author')
+        cls.post = Post.objects.create(
+            author=cls.author_user,
+            text='Тестовый текст',
+        )
+
+    def setUp(self):
+        self.author_client = Client()
+        self.author_client.force_login(self.author_user)
+
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
+
+    def test_follow_for_authorized_user(self):
+        """Авторизованный пользователь может подписываться"""
+        follow_count = Follow.objects.count()
+        self.authorized_client.get(
+            reverse('posts:profile_follow', kwargs={'username': 'author'}))
+        self.assertEqual(Follow.objects.count(), follow_count + 1)
+
+    def test_unfollow_for_authorized_user(self):
+        """Авторизованный пользователь может удалять из подписок"""
+        Follow.objects.create(user=self.user, author=self.author_user)
+        follow_count = Follow.objects.count()
+        self.authorized_client.get(reverse('posts:profile_unfollow',
+                                           kwargs={'username': 'author'}))
+        self.assertEqual(Follow.objects.count(), follow_count - 1)
+
+    def test_new_post_for_follower(self):
+        """Новая запись пользователя появляется в ленте"""
+        new_post = Post.objects.create(text=self.post.text,
+                                       author=self.author_user)
+        Follow.objects.create(user=self.user, author=self.author_user)
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+
+        self.assertEqual(new_post, response.context['page_obj'][0])
+
+    def test_new_post_for_not_follower(self):
+        """Новая запись пользователя не появляется в ленте у неподписчиков"""
+        Post.objects.create(text=self.post.text, author=self.author_user)
+        follow = Follow.objects.create(user=self.user, author=self.author_user)
+        follow.delete()
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+
+        self.assertEqual(len(response.context['page_obj']), 0)

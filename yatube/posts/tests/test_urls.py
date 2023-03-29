@@ -73,7 +73,9 @@ class PostURLTests(TestCase):
             "/profile/author/": "posts/profile.html",
             "/posts/1/": "posts/post_detail.html",
             "/posts/1/edit/": "posts/create_post.html",
-            "/create/": "posts/create_post.html"}
+            "/create/": "posts/create_post.html",
+            "/404/": "core/404.html",
+        }
 
         for address, template in urls_templates.items():
             with self.subTest(address=address):
