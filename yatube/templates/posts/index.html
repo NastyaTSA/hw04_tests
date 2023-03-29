@@ -3,12 +3,15 @@
   Последние обновления на сайте
 {% endblock title %}
 {% block content %}
-  <div class="container py-5">
-    <h1>Последние обновления на сайте</h1>
-    <br>
-    {% for post in page_obj %}
-      {% include 'includes/post_text.html' %}
-    {% endfor %}
-    {% include 'posts/includes/paginator.html' %}
-  </div>
+  {% load cache %}
+  {% cache 20 index_page with page_obj %}
+    <div class="container py-5">
+      <h1>Последние обновления на сайте</h1>
+      <br>
+      {% for post in page_obj %}
+        {% include 'includes/post_text.html' %}
+      {% endfor %}
+      {% include 'posts/includes/paginator.html' %}
+    </div>
+  {% endcache %}
 {% endblock content %}
