@@ -6,7 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from ..models import Group, Post, User
+from ..models import Group, Post, User, Comment
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -22,6 +22,7 @@ class PostFormTests(TestCase):
             title="группа", slug="group_test", description="группа тестов")
         cls.group2 = Group.objects.create(
             title="группа2", slug="group_test2", description="группа тестов2")
+
         cls.small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -29,6 +30,11 @@ class PostFormTests(TestCase):
             b'\x00\x00\x00\x2C\x00\x00\x00\x00'
             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
             b'\x0A\x00\x3B'
+        )
+        cls.post = Post.objects.create(
+            text="Тестовый текст",
+            author=cls.author_user,
+            group=cls.group,
         )
 
     @classmethod
@@ -126,7 +132,6 @@ class PostFormTests(TestCase):
         self.assertEqual(post.group.id, new_form_data['group'])
         self.assertEqual(post.image, f'posts/{new_uploaded}')
 
-
     def test_post_edit_for_nonauthorized_user(self):
         """при отправке валидной формы со страницы редактирования поста
         reverse('posts:post_edit', args=('post_id',)) происходит изменение
@@ -171,3 +176,21 @@ class PostFormTests(TestCase):
 
         self.assertEqual(post.text, old_form_data['text'])
         self.assertEqual(post.group.id, old_form_data['group'])
+
+    def test_add_comment_authorized(self):
+        """Проверка создания пользователем комментария"""
+        comments_count = Comment.objects.count()
+        form_data = {
+            'post': self.post,
+            'author': self.author_user,
+            'text': 'text',
+        }
+        self.author_client.post(
+            reverse('posts:add_comment', args=(self.post.id,)),
+            data=form_data,
+        )
+
+        self.assertEqual(Comment.objects.count(), comments_count + 1)
+        self.assertTrue(Comment.objects.filter(
+            text='text',
+            author=self.author_user, ).exists())

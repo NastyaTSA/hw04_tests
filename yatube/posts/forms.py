@@ -1,6 +1,6 @@
 from django import forms
 
-from posts.models import Post, Group
+from posts.models import Post, Group, Comment
 
 
 def validate_not_empty(value):
@@ -24,3 +24,15 @@ class PostForm(forms.ModelForm):
                                    queryset=Group.objects.all(),
                                    label='Группа',
                                    help_text='Выберите группу')
+
+
+class CommentForm(forms.ModelForm):
+    class Meta():
+        model = Comment
+        fields = ('text',)
+        labels = {
+            'text': 'Текст комментария',
+        }
+        help_texts = {
+            'text': 'Напишите ваш комментарий',
+        }
